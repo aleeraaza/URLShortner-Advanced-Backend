@@ -1,0 +1,65 @@
+// use prisma-8
+model User {
+    id String @id @onCreate(cuid(2))
+    email String @unique
+    passwordHash String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
+
+    shortUrls ShortUrl[]
+    sessions  Session[]
+
+    @@index([email])
+    @@map("users")
+}
+
+model Session {
+    id               String   @id @onCreate(cuid(2))
+    userId           String
+    refreshTokenHash String   @unique
+    userAgent        String?
+    ipAddress        String?
+    expiresAt        DateTime
+    createdAt        DateTime @default(now())
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@map("sessions")
+}
+
+model ShortUrl {
+    id          String   @id @onCreate(cuid(2))
+    originalUrl String
+    shortCode   String   @unique
+    isActive    Boolean  @default(true)
+    expiresAt   DateTime?
+    title       String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @onCreate(now()) @onUpdate(now())
+
+    analytics ClickAnalytics[]
+
+    userId String
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([shortCode])
+    @@map("short_urls")
+}
+
+model ClickAnalytics {
+    id         String   @id @onCreate(cuid(2))
+    shortUrlId String
+    clickedAt  DateTime @default(now())
+
+    ipAddress String?
+    userAgent String?
+    referrer  String?
+    country   String?
+
+    shortUrl ShortUrl @relation(fields: [shortUrlId], references: [id], onDelete: Cascade)
+
+    @@index([shortUrlId])
+    @@index([clickedAt])
+    @@map("click_analytics")
+}
